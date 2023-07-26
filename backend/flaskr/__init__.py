@@ -1,28 +1,29 @@
 import os
 import sys
-from flask import Flask, request, abort, jsonify
+from flask import Flask, request, abort, jsonify, make_response
 from flask_api import status
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
+from sqlalchemy import delete, func
 from sqlalchemy import exc
 from werkzeug import exceptions
 from flask_cors import CORS, cross_origin
 import random
-
-from models import setup_db, Question, Category
-
+from models import setup_db, db,  Question, Category
 
 QUESTIONS_PER_PAGE = 10
+
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
     setup_db(app)
+    db.session.expire_all()
 
     """
     #TODO [X]: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
     cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+
     
     """
     # TODO [X]: Use the after_request decorator to set Access-Control-Allow
@@ -32,11 +33,8 @@ def create_app(test_config=None):
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
         response.headers.add('Access-Control-Allow-Methods', 'GET,PATCH,POST,DELETE,OPTIONS')
         return response
+
     
-#    @app.route('/messages')
-#    @cross_origin()
-##    def get_messages():
-        return 'GETTING MESSAGES'
     """
     #TODO [ ]: Create an endpoint to handle GET requests for all available categories.
     """
@@ -55,6 +53,7 @@ def create_app(test_config=None):
         except Exception as err:
             print(err)
             return "Internal error", status.HTTP_500_INTERNAL_SERVER_ERROR
+
         
     """
     #TODO [X]: Create an endpoint to handle GET requests for questions,
@@ -123,12 +122,26 @@ def create_app(test_config=None):
         
     
     """
-    @TODO:
-    Create an endpoint to DELETE question using a question ID.
-
+    #TODO [X]: Create an endpoint to DELETE question using a question ID.
     TEST: When you click the trash icon next to a question, the question will be removed.
     This removal will persist in the database and when you refresh the page.
     """
+    @app.route('/api/v1.0/questions/<int:question_id>', methods=['DELETE'])
+    @cross_origin()
+    def delete_question(question_id=int):
+        try:
+            record: Question = Question.query.get(question_id)
+            if (record == None):
+               return f'Question # {question_id} not found.', status.HTTP_404_NOT_FOUND
+            
+            record.delete();
+            return f'Question # {question_id} has been successfully deleted.', status.HTTP_200_OK
+      
+        except Exception as err:
+            print(sys.exc_info(), err)
+            return 'Internal Server Error', status.HTTP_500_INTERNAL_SERVER_ERROR
+  
+
 
     """
     @TODO:
