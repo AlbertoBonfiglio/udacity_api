@@ -1,14 +1,7 @@
-import os
 from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
-import json
+from config import SQLALCHEMY_DATABASE_URI, SQLALCHEMY_TRACK_MODIFICATIONS
 
-database_user = 'udacity'
-database_pwd = 'udacity'
-database_server = 'localhost'
-database_name = 'udacity_trivia'
-database_port = '5438'
-database_path = 'postgresql://{}:{}@{}:{}/{}'.format(database_user, database_pwd,database_server, database_port, database_name)
 
 db = SQLAlchemy()
 
@@ -16,9 +9,9 @@ db = SQLAlchemy()
 setup_db(app)
     binds a flask application and a SQLAlchemy service
 """
-def setup_db(app, database_path=database_path):
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_path
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+def setup_db(app, db_uri=SQLALCHEMY_DATABASE_URI):
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = SQLALCHEMY_TRACK_MODIFICATIONS
     db.app = app
     db.init_app(app)
     db.create_all()
@@ -27,7 +20,7 @@ def setup_db(app, database_path=database_path):
 Question
 
 """
-class Question(db.Model):
+class Question(db.Model): # type: ignore
     __tablename__ = 'questions'
 
     id = Column(Integer, primary_key=True)
@@ -66,7 +59,7 @@ class Question(db.Model):
 Category
 
 """
-class Category(db.Model):
+class Category(db.Model): # type: ignore
     __tablename__ = 'categories'
 
     id = Column(Integer, primary_key=True)
