@@ -5,7 +5,7 @@ from flask import Flask, request, abort, jsonify, make_response
 from flask_api import status
 from werkzeug import exceptions
 from flask_cors import CORS, cross_origin
-from models import setup_db, db,  Question, Category
+from backend.models import setup_db, db,  Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
@@ -16,6 +16,7 @@ def create_app(test_config=None):
     setup_db(app)
     db.session.expire_all()
 
+    
     """
     #TODO [X]: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
@@ -68,11 +69,11 @@ def create_app(test_config=None):
             itemsPerPage = request.args.get(
                 'perPage', QUESTIONS_PER_PAGE, type=int)  # type: ignore
             categoryId = request.args.get(
-                'category', -1, type=int)  # type: ignore
+                'category', None, type=int)  # type: ignore
 
             # retrieves the appropriate data
             query = Question.query.order_by(Question.id.asc())
-            if (categoryId != -1):
+            if (categoryId != None):
                 # makes sure we get a valid category if one is passed in
                 categoryObj = Category.query.get(categoryId)
                 if (categoryObj == None):
@@ -167,7 +168,7 @@ def create_app(test_config=None):
                 return unprocessable('Invalid data [question or answer]')
 
             return jsonify({
-                'status': status.HTTP_200_OK,
+                'success': True,
                 'data': record.format()
             })
 
@@ -192,20 +193,27 @@ def create_app(test_config=None):
             if (search == None):
                 return unprocessable('No search string provided')
 
-            result = Question.query \
-                .filter(Question.question.ilike(f'%{search}%')) \
-                .all()
+            # cleans up the string    
+            search = search.strip()
+            result = []
+            if (search != '') : # No point serarching for nothing
+                result = Question.query \
+                    .filter(Question.question.ilike(f'%{search}%')) \
+                    .all()
 
             formattedData = [datum.format() for datum in result]
 
             return jsonify({
-                'status': status.HTTP_200_OK,
-                'data': formattedData
+                'success': True,
+                'query': search,
+                'data': formattedData,
+                'found': len(formattedData)
             })
 
         except Exception as err:
             print(sys.exc_info(), err)
             return internal_error(err)
+
 
     """
     #TODO [X]: Create a GET endpoint to get questions based on category.
@@ -220,17 +228,19 @@ def create_app(test_config=None):
         try:
             qry = Category.query
             
-            categoryId = request.args.get('categoryId', None, type=int)  # type: ignore
-            categoryType: str = request.args.get('categoryType', None, type=str)  # type: ignore
+            categoryId = request.args.get('id', None, type=int)  # type: ignore
+            categoryType: str = request.args.get('type', None, type=str)  # type: ignore
             
             if (categoryId == None and categoryType == None ):
                 return unprocessable("Bad category arguments")
             
-            # retrieves the appropriate category data (eventually refactor to own function or lambda)
+            # retrieves the appropriate category data 
+            # (eventually refactor to own function or lambda)
             if (categoryType == None ):
                 category: Category = qry.get(categoryId)
+                
             if (categoryId == None):
-                # gets the first itmem matching or None
+                # gets the first item matching or None
                 list = qry \
                     .filter(Category.type.ilike(f'%{categoryType}%')) \
                     .all()
@@ -246,8 +256,8 @@ def create_app(test_config=None):
             formattedData = [datum.format() for datum in result]
 
             return jsonify({
-                'status': status.HTTP_200_OK,
-                'category': category.type,
+                'success': True,
+                'category': category.format(),
                 'data': formattedData
             })
 
@@ -268,7 +278,7 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
-    @app.route('/api/v1.0/questions/get_random', methods=['POST'])
+    @app.route('/api/v1.0/questions/random', methods=['POST'])
     @cross_origin()
     def get_random_questions():
         try:
@@ -276,17 +286,25 @@ def create_app(test_config=None):
             body = request.get_json()  # type: ignore
             category: int = body.get('category', None)
             previous: [int] = body.get('previous', [])
-
+            
             # if a category is specified filters the resultset
             if (category != None):
-                qry = qry.filter(Question.category == category)
-            
+                category: Category = Category.query.get(category)
+                if (category == None):                
+                    return unprocessable("Category does not exist")
+                qry = qry.filter(Question.category == category.id)
+                        
             # filters out previous questions if necessary
             if (previous):
                 qry = qry.filter(Question.id.notin_(previous))  
+                #TODO [ ] Maybe at a later time verify that all the passed in previous
+                #         ids actually exists and remove the invalid ones from the list
+                #         For right now we just ignore them
 
+            # gets the data
+            # this disregards the possibility of invalid previous entries
             result = qry.all()
-            available = len(result)
+            available = len(result) 
             if (result): # something is returned
                 available = available - 1 # left over questions in category
                 rando: Question = random.choice(result)
@@ -296,11 +314,11 @@ def create_app(test_config=None):
                 formattedData = None
 
             return jsonify({
-                'status': status.HTTP_200_OK,
-                'category': category,
+                'success': True,
+                'category': category.format() if category else None,
                 'previous': previous,  
                 'data': formattedData,
-                'available': available
+                'available': available 
             })
 
         except Exception as err:
@@ -316,10 +334,18 @@ def create_app(test_config=None):
     def not_found(error):
         return jsonify({
             "success": False,
-            "error": error,
+            "error": str(error),
             "message": "Not found"
         }), status.HTTP_404_NOT_FOUND
 
+    @app.errorhandler(405)
+    def not_allowed(error):
+        return jsonify({
+            "success": False,
+            "error": error,
+            "message": "Not allowed"
+        }), status.HTTP_405_METHOD_NOT_ALLOWED
+        
     @app.errorhandler(422)
     def unprocessable(error):
         return jsonify({
