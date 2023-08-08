@@ -287,18 +287,61 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code,  status.HTTP_200_OK)
         
             
-    # TODO [ ] POST NEW /api/v1.0/questions should return 200 after successful submission
+    # TODO [X] POST NEW /api/v1.0/questions should return 200 after successful submission
+    def test_add_question(self):  
+        url = f'/api/v1.0/questions'
+        _json = {
+            'question': 'Another question',
+            'answer': '42',
+            'category': 2,
+            'difficulty': 1            
+        }
+
+        res = self.client().post(url, json = _json)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK )
+        self.assertIsInstance(data['data'], dict )
+        
+        # Clean up
+        id = data['data']['id']
+        url = f'/api/v1.0/questions/{id}'
+        res = self.client().delete(url)
+        
+        
     # TODO [ ] POST NEW /api/v1.0/questions should return 422 if category not valid
+    def test_add_question_invalid_category(self):  
+        url = f'/api/v1.0/questions'
+        _json = {
+            'question': 'Another question',
+            'answer': '42',
+            'category': 27642,
+            'difficulty': 1            
+        }
+        res = self.client().post(url, json = _json)
+        self.assertEqual(res.status_code, 422 )
+        
+        
     # TODO [ ] POST NEW /api/v1.0/questions should return 422 if question or answer are null or empty
+    def test_add_question_invalid_QandA(self):  
+        url = f'/api/v1.0/questions'
+        _json = {
+            'question': '',
+            'answer': '',
+            'category': 2,
+            'difficulty': 1            
+        }
+        res = self.client().post(url, json = _json)
+        self.assertEqual(res.status_code, 422 )
+    
     # TODO [ ] POST NEW /api/v1.0/questions should return 500 if internal error occurs
+    
     
     # TODO [X] POST FIND /api/v1.0/questions/search should return 200 after successful submission
     def test_search_questions(self):  
         """Test should return 200 """
         url = f'/api/v1.0/questions/search'
-        _json = {
-            'search': 'est'
-        }
+        _json = {'search': 'est'}
         res = self.client().post(url, json = _json)
         data = json.loads(res.data)
 
@@ -306,6 +349,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertIsInstance(data['data'], list )
         self.assertEqual(len(data['data']), len(question_list) ) 
         self.assertEqual(data['found'], len(question_list) ) 
+        
+        
 
     # TODO [X] POST FIND /api/v1.0/questions/search should return 200 if search is empty
     def test_search_questions_empty_string(self):  
@@ -345,6 +390,9 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().post(url, json = _json)
         self.assertEqual(res.status_code, 422 )
         
+    
+    
+    
     
 # Make the tests conveniently executable
 if __name__ == "__main__":

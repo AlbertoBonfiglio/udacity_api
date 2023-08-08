@@ -156,13 +156,16 @@ def create_app(test_config=None):
                 return unprocessable('Invalid data [category not found]')
 
             # builds the record
+            question = body.get('question', '').strip()
+            answer = body.get('answer', '').strip()
+            
             record: Question = Question(
-                question=body.get('question', None),
-                answer=body.get('answer', None),
-                category=category.id,
-                difficulty=body.get('difficulty', 0)
+                question= question,
+                answer = answer,
+                category = category.id,
+                difficulty = body.get('difficulty', 0)
             )
-            if (record.question != None and record.answer != None):
+            if (record.question != '' and record.answer != '' ):
                 record.insert()
             else:
                 return unprocessable('Invalid data [question or answer]')
@@ -217,7 +220,6 @@ def create_app(test_config=None):
 
     """
     #TODO [X]: Create a GET endpoint to get questions based on category.
-
     TEST: In the "List" tab / main screen, clicking on one of the
     categories in the left column will cause only questions of that
     category to be shown.
