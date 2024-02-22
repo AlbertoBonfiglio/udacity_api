@@ -4,7 +4,7 @@
 
 ### Install Dependencies
 
-1. **Python 3.7** - Follow instructions to install the latest version of python for your platform in the [python docs](https://docs.python.org/3/using/unix.html#getting-and-installing-the-latest-version-of-python)
+1. **Python 3.9.17** - Follow instructions to install the latest version of python for your platform in the [python docs](https://docs.python.org/3/using/unix.html#getting-and-installing-the-latest-version-of-python)
 
 2. **Virtual Environment** - We recommend working within a virtual environment whenever using Python for projects. This keeps your dependencies for each project separate and organized. Instructions for setting up a virual environment for your platform can be found in the [python docs](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
 
@@ -25,28 +25,38 @@ pip install -r requirements.txt
 ### Set up the Database
 
 With Postgres running, create a `trivia` database:
-
 ```bash
 createdb trivia
 ```
 
-Populate the database using the `trivia.psql` file provided. From the `backend` folder in terminal run:
+Populate the database using the `trivia.psql` file provided. From the `backend` folder in terminal log in the database shell:
+```bash
+psql "dbname=<DB_NAME> host=<SERVER> user=<USER_NAME> password=<PWD> port=<PORT> sslmode=<ARGS>"
+```
 
+then populate the data from the trivia.sql file:
 ```bash
 psql trivia < trivia.psql
 ```
+
+Finally create a `trivia_test` database for integratiuon and unit testing:
+```bash
+createdb trivia_test
+```
+
 
 ### Run the Server
 
 From within the `./src` directory first ensure you are working using your created virtual environment.
 
 To run the server, execute:
-
 ```bash
 flask run --reload
 ```
 
 The `--reload` flag will detect file changes and restart the server automatically.
+
+Alternatively, if you're using VS Code, you could just run and debug using the configuration  in `.vscode/launch.json`
 
 ## To Do Tasks
 
@@ -67,28 +77,9 @@ One note before you delve into your tasks: for each endpoint, you are expected t
 8. Create a `POST` endpoint to get questions to play the quiz. This endpoint should take a category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions.
 9. Create error handlers for all expected errors including 400, 404, 422, and 500.
 
-## Documenting your Endpoints
+## Endpoint documentation
 
-You will need to provide detailed documentation of your API endpoints including the URL, request parameters, and the response body. Use the example below as a reference.
-
-### Documentation Example
-
-`GET '/api/v1.0/categories'`
-
-- Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
-- Request Arguments: None
-- Returns: An object with a single key, `categories`, that contains an object of `id: category_string` key: value pairs.
-
-```json
-{
-  "1": "Science",
-  "2": "Art",
-  "3": "Geography",
-  "4": "History",
-  "5": "Entertainment",
-  "6": "Sports"
-}
-```
+Detailed documentation of the API endpoints including the URL, request parameters, and the response body can be found in the `DOCUMENTATION.md` file.
 
 ## Testing
 
@@ -97,8 +88,8 @@ Write at least one test for the success and at least one error behavior of each 
 To deploy the tests, run
 
 ```bash
-dropdb trivia_test
-createdb trivia_test
-psql trivia_test < trivia.psql
+dropdb <DB_NAME>_test
+createdb <DB_NAME>_test
+psql <DB_NAME>_test < trivia.psql
 python test_flaskr.py
 ```

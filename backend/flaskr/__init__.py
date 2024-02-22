@@ -51,6 +51,60 @@ def create_app(test_config=None):
         except Exception as err:
             return internal_error(err)
 
+    @app.route('/api/v1.0/categories/<int:categoryId>', methods=['GET'])
+    @cross_origin()
+    def get_category(categoryId= int):
+        try:
+           
+            # retrieves the appropriate category data 
+            # (eventually refactor to own function or lambda)
+            category: Category = Category.query.get(categoryId)
+                
+            if (category == None):
+                return unprocessable("Category does not exist")
+
+            
+            formattedData = category.format()
+
+            return jsonify({
+                'success': True,
+                'data': formattedData
+            })
+
+        except Exception as err:
+            print(sys.exc_info(), err)
+            return internal_error(err)
+
+    @app.route('/api/v1.0/categories/<int:categoryId>/questions', methods=['GET'])
+    @cross_origin()
+    def get_questions_by_category2(categoryId= int):
+        try:
+           
+            # retrieves the appropriate category data 
+            # (eventually refactor to own function or lambda)
+            category: Category = Category.query.get(categoryId)
+                
+            if (category == None):
+                return unprocessable("Category does not exist")
+
+            result = Question.query \
+                .order_by(Question.id.asc()) \
+                .filter(Question.category == category.id) \
+                .all()
+
+            formattedData = [datum.format() for datum in result]
+
+            return jsonify({
+                'success': True,
+                'category': category.format(),
+                'data': formattedData
+            })
+
+        except Exception as err:
+            print(sys.exc_info(), err)
+            return internal_error(err)
+
+
     """
     #TODO [X]: Create an endpoint to handle GET requests for questions, including pagination 
     (every 10 questions).    

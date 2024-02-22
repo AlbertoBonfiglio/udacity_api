@@ -7,7 +7,6 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 DEBUG = True
 
 # Connect to the database
-
 database_user = 'udacity'
 database_pwd = 'udacity'
 database_server = 'localhost'
@@ -17,3 +16,5 @@ database_path = 'postgresql://{}:{}@{}:{}/{}'.format(database_user, database_pwd
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SQLALCHEMY_DATABASE_URI = database_path
+SQLALCHEMY_SERVER_URI = 'postgresql://{}:{}@{}:{}'.format(
+    database_user, database_pwd, database_server, database_port)
