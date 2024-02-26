@@ -8,7 +8,7 @@ from flask_cors import CORS, cross_origin
 from backend.models import setup_db, db,  Question, Category
 
 QUESTIONS_PER_PAGE = 10
-
+MAX_DIFFICULTY = 10
 
 def create_app(test_config=None):
     # create and configure the app
@@ -103,7 +103,6 @@ def create_app(test_config=None):
         except Exception as err:
             print(sys.exc_info(), err)
             return internal_error(err)
-
 
     """
     #TODO [X]: Create an endpoint to handle GET requests for questions, including pagination 
@@ -208,7 +207,11 @@ def create_app(test_config=None):
             category = Category.query.get(body.get('category', None))
             if (category == None):
                 return unprocessable('Invalid data [category not found]')
-
+            
+            difficulty = body.get('difficulty', 0);
+            if (difficulty < 1 or difficulty > MAX_DIFFICULTY ):
+                return unprocessable('Invalid data [difficulty must be between 1 and 10]')
+            
             # builds the record
             question = body.get('question', '').strip()
             answer = body.get('answer', '').strip()
@@ -245,6 +248,9 @@ def create_app(test_config=None):
     def find_questions():
         try:
             body = request.get_json()  # type: ignore
+            if (body == None):
+                return unprocessable('No search string provided')
+
             search = body.get('search', None)
 
             if (search == None):
@@ -271,7 +277,6 @@ def create_app(test_config=None):
             print(sys.exc_info(), err)
             return internal_error(err)
 
-
     """
     #TODO [X]: Create a GET endpoint to get questions based on category.
     TEST: In the "List" tab / main screen, clicking on one of the
@@ -288,8 +293,12 @@ def create_app(test_config=None):
             categoryType: str = request.args.get('type', None, type=str)  # type: ignore
             
             if (categoryId == None and categoryType == None ):
-                return unprocessable("Bad category arguments")
-            
+                return unprocessable("Bad category arguments. Either Id or type are required")
+
+            # only one argument must be submitted
+            if (categoryId != None and categoryType != None):
+                return unprocessable("Bad category arguments. Submit either category Id or type")
+
             # retrieves the appropriate category data 
             # (eventually refactor to own function or lambda)
             if (categoryType == None ):
@@ -320,9 +329,6 @@ def create_app(test_config=None):
         except Exception as err:
             print(sys.exc_info(), err)
             return internal_error(err)
-
-
-    
 
     """
     #TODO [X]: Create a POST endpoint to get questions to play the quiz.

@@ -73,7 +73,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['page'], 1),
         self.assertEqual(data['pages'], math.ceil(len(question_list)/QUESTIONS_PER_PAGE)),
         self.assertEqual(data['perPage'], QUESTIONS_PER_PAGE)
-
     
     # TODO [X] GET /api/v1.0/questions?page=3 should return the 3rd page of questions 
     def test_get_questions_page(self):
@@ -88,7 +87,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['page'], pagenumber),
         self.assertEqual(data['pages'], math.ceil(len(question_list)/QUESTIONS_PER_PAGE)),
         self.assertEqual(data['perPage'], QUESTIONS_PER_PAGE)
-
     
     # TODO [X] GET /api/v1.0/questions?page=300 should return 404 if not exists         
     def test_get_questions_page_not_exists(self):
@@ -99,8 +97,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code,  status.HTTP_404_NOT_FOUND)
         
      # TODO [X] /api/v1.0/questions?perPage=3 should return the 3 items  
-  
-  
+   
     # TODO [X] GET /api/v1.0/questions?perpage=3 should return 3 items
     def test_get_questions_items_perpage(self):
         """Test should return all the question for the specified page """
@@ -115,8 +112,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['pages'], math.ceil(len(question_list)/perpage)),
         self.assertEqual(data['perPage'], perpage)
         self.assertEqual(len(data['data']), perpage),
-        
-    
+     
     # TODO [X] GET /api/v1.0/questions?category=2 should return all items for category 2
     def test_get_questions_category(self):
         """Test should return all the question for the specified page """
@@ -129,8 +125,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['total'], 10)
         self.assertEqual(data['page'], 1),
         self.assertEqual(data['pages'], math.ceil(10/QUESTIONS_PER_PAGE)),
-        self.assertEqual(data['perPage'], QUESTIONS_PER_PAGE)
-        
+        self.assertEqual(data['perPage'], QUESTIONS_PER_PAGE)    
         
     # TODO [X] GET /api/v1.0/questions?category=200 should return 422
     def test_get_questions_category_not_exists(self):
@@ -141,8 +136,7 @@ class TriviaTestCase(unittest.TestCase):
         data = json.loads(res.data)
         self.assertEqual(res.status_code,  422)
         self.assertEqual(data['success'], False),
-    
-    
+        
     # TODO [X] GET /api/v1.0/questions/category?id=1 should return 200
     def test_get_all_questions_by_category_id(self):
         """Test should return 200 and the list of questions """
@@ -154,8 +148,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertEqual(len(data['data']), 10)
         self.assertEqual(data['category']['id'], category)
-    
-        
+            
     # TODO [X] GET /api/v1.0/questions/category?type=crafts should return 200
     def test_get_all_questions_by_category_type(self):
         """Test should return 200 and the list of questions """
@@ -167,18 +160,25 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertEqual(len(data['data']), 10)
         self.assertEqual(data['category']['type'], category)
-    
         
     # TODO [X] GET /api/v1.0/questions/category should return 422
     def test_get_all_questions_by_category_type_none(self):
-        """Test should return 200 and the list of questions """
+        """Test should return 422"""
         category = None
         url = f'/api/v1.0/questions/category?type={category}'
         res = self.client().get(url)
         data = json.loads(res.data)
         self.assertEqual(res.status_code,  422 )
-    
-    
+
+    # TODO [X] GET /api/v1.0/questions/category should return 422
+
+    def test_get_all_questions_by_category_type_both(self):
+        """Test should return 422 """
+        url = f'/api/v1.0/questions/category?type=science&id=3'
+        res = self.client().get(url)
+        data = json.loads(res.data)
+        self.assertEqual(res.status_code,  422)
+
     # TODO [X] GET /api/v1.0/questions/category should return 422
     def test_get_all_questions_by_category_id_none(self):
         """Test should return 422 """
@@ -187,8 +187,7 @@ class TriviaTestCase(unittest.TestCase):
         res = self.client().get(url)
         data = json.loads(res.data)
         self.assertEqual(res.status_code,  422 )
-        
-        
+            
     # TODO [X] POST RAND /api/v1.0/questions/random should return 200
     def test_get_random_question(self):
         """Test should return 200 """
@@ -201,7 +200,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertIsNone(data['category'])
         self.assertIn(data['data']['id'], data['previous'])
         
-    
     # TODO [X] POST RAND /api/v1.0/questions/random with category  should return 200
     def test_get_random_question_with_category(self):
         """Test should return 200 """
@@ -258,8 +256,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['available'], len(question_list) - expected_len ) 
         # Invalid ids are not removed from the list at the moment
         self.assertEqual(len(data['previous']), expected_len + 1)  
-        self.assertIn(data['data']['id'], data['previous'])    
-    
+        self.assertIn(data['data']['id'], data['previous'])       
     
     # TODO [X] DEL /api/v1.0/questions/666 should return 404 not found
     def test_delete_question_not_exists(self):
@@ -268,8 +265,7 @@ class TriviaTestCase(unittest.TestCase):
         url = f'/api/v1.0/questions/{id}'
         res = self.client().delete(url)
         self.assertEqual(res.status_code,  status.HTTP_404_NOT_FOUND)
-    
-        
+           
     # TODO [X] DEL /api/v1.0/questions/<int> should return 200 after successful deletion
     def test_delete_question(self):
         """Test should return 200 """
@@ -285,8 +281,7 @@ class TriviaTestCase(unittest.TestCase):
         url = f'/api/v1.0/questions/{id}'
         res = self.client().delete(url)
         self.assertEqual(res.status_code,  status.HTTP_200_OK)
-        
-            
+                  
     # TODO [X] POST NEW /api/v1.0/questions should return 200 after successful submission
     def test_add_question(self):  
         url = f'/api/v1.0/questions'
@@ -308,8 +303,7 @@ class TriviaTestCase(unittest.TestCase):
         url = f'/api/v1.0/questions/{id}'
         res = self.client().delete(url)
         
-        
-    # TODO [ ] POST NEW /api/v1.0/questions should return 422 if category not valid
+    # TODO [X] POST NEW /api/v1.0/questions should return 422 if category not valid
     def test_add_question_invalid_category(self):  
         url = f'/api/v1.0/questions'
         _json = {
@@ -320,8 +314,30 @@ class TriviaTestCase(unittest.TestCase):
         }
         res = self.client().post(url, json = _json)
         self.assertEqual(res.status_code, 422 )
-        
-        
+    
+    # TODO [ ] POST NEW /api/v1.0/questions should return 422 if difficulty not valid
+    def test_add_question_invalid_difficulty(self):
+        url = f'/api/v1.0/questions'
+        _json = {
+            'question': 'Another question',
+            'answer': '42',
+            'category': 1,
+            'difficulty': 0
+        }
+        res = self.client().post(url, json=_json)
+        self.assertEqual(res.status_code, 422)
+
+    # TODO [ ] POST NEW /api/v1.0/questions should return 422 if difficulty not valid
+    def test_add_question_missing_difficulty(self):
+        url = f'/api/v1.0/questions'
+        _json = {
+            'question': 'Another question',
+            'answer': '42',
+            'category': 1
+        }
+        res = self.client().post(url, json=_json)
+        self.assertEqual(res.status_code, 422)
+
     # TODO [ ] POST NEW /api/v1.0/questions should return 422 if question or answer are null or empty
     def test_add_question_invalid_QandA(self):  
         url = f'/api/v1.0/questions'
@@ -335,8 +351,12 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 422 )
     
     # TODO [ ] POST NEW /api/v1.0/questions should return 500 if internal error occurs
-    
-    
+    def test_add_question_internal_error(self):  
+        url = f'/api/v1.0/questions'
+        _json = 'question'
+        res = self.client().post(url, json = _json)
+        self.assertEqual(res.status_code, 500 )
+         
     # TODO [X] POST FIND /api/v1.0/questions/search should return 200 after successful submission
     def test_search_questions(self):  
         """Test should return 200 """
@@ -349,9 +369,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertIsInstance(data['data'], list )
         self.assertEqual(len(data['data']), len(question_list) ) 
         self.assertEqual(data['found'], len(question_list) ) 
-        
-        
-
+    
     # TODO [X] POST FIND /api/v1.0/questions/search should return 200 if search is empty
     def test_search_questions_empty_string(self):  
         """Test should return 200 """
@@ -389,10 +407,7 @@ class TriviaTestCase(unittest.TestCase):
         _json = {'zearch':'XYZ'}
         res = self.client().post(url, json = _json)
         self.assertEqual(res.status_code, 422 )
-        
-    
-    
-    
+  
     
 # Make the tests conveniently executable
 if __name__ == "__main__":
