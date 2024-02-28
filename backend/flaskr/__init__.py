@@ -5,18 +5,21 @@ from flask import Flask, request, abort, jsonify, make_response
 from flask_api import status
 from werkzeug import exceptions
 from flask_cors import CORS, cross_origin
-from backend.models import setup_db, db,  Question, Category
+from backend.models import setup_db, db, Question, Category
+from backend.config import load_config
+
 
 QUESTIONS_PER_PAGE = 10
 MAX_DIFFICULTY = 10
 
-def create_app(test_config=None):
+
+def create_app(env_config=".env"):
     # create and configure the app
     app = Flask(__name__)
+    load_config(env_config)
     setup_db(app)
     db.session.expire_all()
 
-    
     """
     #TODO [X]: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
@@ -53,17 +56,16 @@ def create_app(test_config=None):
 
     @app.route('/api/v1.0/categories/<int:categoryId>', methods=['GET'])
     @cross_origin()
-    def get_category(categoryId= int):
+    def get_category(categoryId=int):
         try:
-           
-            # retrieves the appropriate category data 
+
+            # retrieves the appropriate category data
             # (eventually refactor to own function or lambda)
             category: Category = Category.query.get(categoryId)
-                
-            if (category == None):
+
+            if (category is None):
                 return unprocessable("Category does not exist")
 
-            
             formattedData = category.format()
 
             return jsonify({
@@ -75,16 +77,17 @@ def create_app(test_config=None):
             print(sys.exc_info(), err)
             return internal_error(err)
 
-    @app.route('/api/v1.0/categories/<int:categoryId>/questions', methods=['GET'])
+    @app.route('/api/v1.0/categories/<int:categoryId>/questions',
+               methods=['GET'])
     @cross_origin()
-    def get_questions_by_category2(categoryId= int):
+    def get_questions_by_category2(categoryId=int):
         try:
-           
-            # retrieves the appropriate category data 
+
+            # retrieves the appropriate category data
             # (eventually refactor to own function or lambda)
             category: Category = Category.query.get(categoryId)
-                
-            if (category == None):
+
+            if (category is None):
                 return unprocessable("Category does not exist")
 
             result = Question.query \
@@ -105,10 +108,10 @@ def create_app(test_config=None):
             return internal_error(err)
 
     """
-    #TODO [X]: Create an endpoint to handle GET requests for questions, including pagination 
-    (every 10 questions).    
+    #TODO [X]: Create an endpoint to handle GET requests for questions, including pagination
+    (every 10 questions).
     This endpoint should return a list of questions, number of total questions, current category, categories.
-    
+
     TEST: At this point, when you start the application you should see questions and categories generated,
     ten questions per page and pagination at the bottom of the screen for three pages.
     Clicking on the page numbers should update the questions.
@@ -126,10 +129,10 @@ def create_app(test_config=None):
 
             # retrieves the appropriate data
             query = Question.query.order_by(Question.id.asc())
-            if (categoryId != None):
+            if (categoryId is not None):
                 # makes sure we get a valid category if one is passed in
                 categoryObj = Category.query.get(categoryId)
-                if (categoryObj == None):
+                if (categoryObj is None):
                     return unprocessable("Database error. Category not found.")
                 categoryObj = categoryObj.format()
                 query = query.filter(Question.category == categoryId)
@@ -142,9 +145,10 @@ def create_app(test_config=None):
             # formats the data for output
             formattedData = [datum.format() for datum in result.items]
 
-            # gets the available categories. Returns an error if it can't find any
+            # gets the available categories. Returns an error if it can't find
+            # any
             categoryData = Category.query.all()
-            if (categoryData == None):
+            if (categoryData is None):
                 raise Exception(
                     'Database error. Unable to retrieve categories')
             formattedCategoryData = [datum.format() for datum in categoryData]
@@ -163,7 +167,8 @@ def create_app(test_config=None):
 
         except exceptions.NotFound:
             # If the page is outside the boundaries sqlalchemy returns:
-            # werkzeug.exceptions.NotFound: 404 Not Found: The requested URL was not found on the server.
+            # werkzeug.exceptions.NotFound: 404 Not Found: The requested URL
+            # was not found on the server.
             return not_found("Database error. Page outside limits.")
 
         except Exception as err:
@@ -180,7 +185,7 @@ def create_app(test_config=None):
     def delete_question(question_id=int):
         try:
             record: Question = Question.query.get(question_id)
-            if (record == None):
+            if (record is None):
                 return not_found(f'Question # {question_id} not found.')
 
             record.delete()
@@ -194,7 +199,7 @@ def create_app(test_config=None):
     #TODO [X]: Create an endpoint to POST a new question, which will require the question and answer text,
     category, and difficulty score.
 
-    TEST: When you submit a question on the "Add" tab, the form will clear and the question will appear at 
+    TEST: When you submit a question on the "Add" tab, the form will clear and the question will appear at
     the end of the last page of the questions list in the "List" tab.
     """
     @app.route('/api/v1.0/questions', methods=['POST'])
@@ -205,24 +210,25 @@ def create_app(test_config=None):
 
             # checks the category
             category = Category.query.get(body.get('category', None))
-            if (category == None):
+            if (category is None):
                 return unprocessable('Invalid data [category not found]')
-            
-            difficulty = body.get('difficulty', 0);
-            if (difficulty < 1 or difficulty > MAX_DIFFICULTY ):
-                return unprocessable('Invalid data [difficulty must be between 1 and 10]')
-            
+
+            difficulty = body.get('difficulty', 0)
+            if (difficulty < 1 or difficulty > MAX_DIFFICULTY):
+                return unprocessable(
+                    'Invalid data [difficulty must be between 1 and 10]')
+
             # builds the record
             question = body.get('question', '').strip()
             answer = body.get('answer', '').strip()
-            
+
             record: Question = Question(
-                question= question,
-                answer = answer,
-                category = category.id,
-                difficulty = body.get('difficulty', 0)
+                question=question,
+                answer=answer,
+                category=category.id,
+                difficulty=body.get('difficulty', 0)
             )
-            if (record.question != '' and record.answer != '' ):
+            if (record.question != '' and record.answer != ''):
                 record.insert()
             else:
                 return unprocessable('Invalid data [question or answer]')
@@ -240,7 +246,7 @@ def create_app(test_config=None):
     #TODO [X]: Create a POST endpoint to get questions based on a search term.
     It should return any questions for whom the search term  is a substring of the question.
 
-    TEST: Search by any phrase. The questions list will update to include  only question that 
+    TEST: Search by any phrase. The questions list will update to include  only question that
     include that string within their question.  Try using the word "title" to start.
     """
     @app.route('/api/v1.0/questions/search', methods=['POST'])
@@ -248,18 +254,18 @@ def create_app(test_config=None):
     def find_questions():
         try:
             body = request.get_json()  # type: ignore
-            if (body == None):
+            if (body is None):
                 return unprocessable('No search string provided')
 
             search = body.get('search', None)
 
-            if (search == None):
+            if (search is None):
                 return unprocessable('No search string provided')
 
-            # cleans up the string    
+            # cleans up the string
             search = search.strip()
             result = []
-            if (search != '') : # No point serarching for nothing
+            if (search != ''):  # No point serarching for nothing
                 result = Question.query \
                     .filter(Question.question.ilike(f'%{search}%')) \
                     .all()
@@ -288,29 +294,32 @@ def create_app(test_config=None):
     def get_questions_by_category():
         try:
             qry = Category.query
-            
+
             categoryId = request.args.get('id', None, type=int)  # type: ignore
-            categoryType: str = request.args.get('type', None, type=str)  # type: ignore
-            
-            if (categoryId == None and categoryType == None ):
-                return unprocessable("Bad category arguments. Either Id or type are required")
+            categoryType: str = request.args.get(
+                'type', None, type=str)  # type: ignore
+
+            if (categoryId is None and categoryType is None):
+                return unprocessable(
+                    "Bad category arguments. Either Id or type are required")
 
             # only one argument must be submitted
-            if (categoryId != None and categoryType != None):
-                return unprocessable("Bad category arguments. Submit either category Id or type")
+            if (categoryId is not None and categoryType is not None):
+                return unprocessable(
+                    "Bad category arguments. Submit either category Id or type")
 
-            # retrieves the appropriate category data 
+            # retrieves the appropriate category data
             # (eventually refactor to own function or lambda)
-            if (categoryType == None ):
+            if (categoryType is None):
                 category: Category = qry.get(categoryId)
-                
-            if (categoryId == None):
+
+            if (categoryId is None):
                 # gets the first item matching or None
                 list = qry \
                     .filter(Category.type.ilike(f'%{categoryType}%')) \
                     .all()
-                category: Category = list[0] if list else None 
-            if (category == None):
+                category: Category = list[0] if list else None
+            if (category is None):
                 return unprocessable("Category does not exist")
 
             result = Question.query \
@@ -347,28 +356,28 @@ def create_app(test_config=None):
             qry = Question.query
             body = request.get_json()  # type: ignore
             category: int = body.get('category', None)
-            previous: [int] = body.get('previous', [])
-            
+            previous = body.get('previous', [])
+
             # if a category is specified filters the resultset
-            if (category != None):
+            if (category is not None):
                 category: Category = Category.query.get(category)
-                if (category == None):                
+                if (category is None):
                     return unprocessable("Category does not exist")
                 qry = qry.filter(Question.category == category.id)
-                        
+
             # filters out previous questions if necessary
             if (previous):
-                qry = qry.filter(Question.id.notin_(previous))  
-                #TODO [ ] Maybe at a later time verify that all the passed in previous
+                qry = qry.filter(Question.id.notin_(previous))
+                # TODO [ ] Maybe at a later time verify that all the passed in previous
                 #         ids actually exists and remove the invalid ones from the list
                 #         For right now we just ignore them
 
             # gets the data
             # this disregards the possibility of invalid previous entries
             result = qry.all()
-            available = len(result) 
-            if (result): # something is returned
-                available = available - 1 # left over questions in category
+            available = len(result)
+            if (result):  # something is returned
+                available = available - 1  # left over questions in category
                 rando: Question = random.choice(result)
                 formattedData = rando.format()
                 previous.append(rando.id)
@@ -378,16 +387,15 @@ def create_app(test_config=None):
             return jsonify({
                 'success': True,
                 'category': category.format() if category else None,
-                'previous': previous,  
+                'previous': previous,
                 'data': formattedData,
-                'available': available 
+                'available': available
             })
 
         except Exception as err:
             print(sys.exc_info(), err)
             return internal_error(err)
-        
-    
+
     """
     #TODO [X]:
     Create error handlers for all expected errors including 404 and 422.
@@ -407,7 +415,7 @@ def create_app(test_config=None):
             "error": error,
             "message": "Not allowed"
         }), status.HTTP_405_METHOD_NOT_ALLOWED
-        
+
     @app.errorhandler(422)
     def unprocessable(error):
         return jsonify({
@@ -423,4 +431,5 @@ def create_app(test_config=None):
             "error": error.args[0],
             "message": "Internal Server Error"
         }), status.HTTP_500_INTERNAL_SERVER_ERROR
+
     return app

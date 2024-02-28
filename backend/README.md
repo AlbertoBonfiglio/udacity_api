@@ -44,6 +44,25 @@ Finally create a `trivia_test` database for integratiuon and unit testing:
 createdb trivia_test
 ```
 
+### Set up the environment
+[Python-dotenv](https://pypi.org/project/python-dotenv/) is the package that will handle loading the environment to prevent hardcoding the configuration values. The `.env` file in the backend's root directory allows for easy configuration of the environment during development, or production. The `.env.test` file handles the connection to the test database for the unit tests.
+
+`These files should NOT be included in source control system to prevent unauthorized access`
+
+The required environment variables are: 
+- SECRET_KEY: a string value unused at this time. Could be used to implement basic key authorization for the endpoints  
+- DEBUG: a boolean value used for debugging purposes
+- DB_SRV: the url of the server that hosts the database (e.g.: localhost)
+- DB_NAME: the name of the database (e.g.: udacity_trivia)
+- DB_PORT: the port the server is listening to (default: 5438)
+- DB_USER: The username that has read, connection, and write permissions to the database
+- DB_PWD = the user password
+- TRACK_MODS: a flag to enable or disable SQLAlchemy tracking modifications of objects. Maps to SQLALCHEMY_TRACK_MODIFICATIONS. Set it to False to disable tracking and use less memory. Defaults to FALSE if not set.
+- DATABASE_URI: the full uri for postgeSQL in the following format: postgresql://${DB_USER}:${DB_PWD}@${DB_SRV}:${DB_PORT}/${DB_NAME}
+
+
+
+
 
 ### Run the Server
 

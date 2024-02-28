@@ -14,3 +14,4 @@ SQLAlchemy==1.3.4
 Werkzeug==0.15.5
 flask_api
 faker_sqlalchemy
+python-dotenv==1.0.1
